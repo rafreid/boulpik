@@ -21,6 +21,7 @@ const replayBtn     = $('#replay-btn');
 const againBtn      = $('#again-btn');
 const errorText     = $('#error-text');
 const restartBtn    = $('#restart-btn');
+const clearBtn      = $('#clear-btn');
 const balanceEl     = $('#balance');
 const statusMsg     = $('#status-msg');
 const player        = $('#player');
@@ -136,6 +137,7 @@ async function boot() {
   wireReplay();
   wireAgain();
   wireRestart();
+  wireClear();
 
   // Speech recognition not available → still usable via chips, but flag it.
   if (!isSupported) {
@@ -455,6 +457,28 @@ function wireRestart() {
     setStatus('');
     setPane('listen');
   });
+}
+
+// Dismiss the current result and put the app back to its clean idle state.
+// Unlike "Mande yon lòt" (which just transitions panes), this also pauses
+// in-flight playback, revokes the audio blob URL (so we don't leak memory
+// across long sessions), and clears the cached last result.
+function clearResult() {
+  player.pause();
+  if (state.lastAudioUrl) {
+    URL.revokeObjectURL(state.lastAudioUrl);
+    state.lastAudioUrl = null;
+  }
+  player.removeAttribute('src');
+  state.lastResult = null;
+  resultText.textContent = '';
+  resultGame.textContent = '—';
+  setStatus('');
+  setPane('listen');
+}
+
+function wireClear() {
+  clearBtn.addEventListener('click', clearResult);
 }
 
 /* ── Go ──────────────────────────────────────────────────────────────── */

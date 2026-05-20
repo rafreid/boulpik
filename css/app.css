@@ -266,6 +266,36 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 }
 
 /* ── RESULT pane ─────────────────────────────────────────────────────── */
+/* The result card needs to be a positioning context so the dismiss
+   button can anchor to its top-right corner. */
+.alt-auth-card.pane-card { position: relative; }
+
+/* Subtle × in the top-right corner of the result card. Reads as a
+   universal "dismiss" without competing with the bottom CTAs. */
+.card-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--color-toggle-bg);
+  color: var(--color-primary-80);
+  border: 1px solid var(--color-card-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease, transform 0.12s ease, box-shadow 0.18s ease;
+}
+.card-close:hover {
+  background: #fff;
+  color: var(--color-primary);
+  box-shadow: 0 2px 8px var(--color-card-shadow);
+}
+.card-close:active { transform: scale(0.9); background: var(--color-primary-12); }
+.card-close svg { width: 14px; height: 14px; }
+
 .result-game {
   align-self: center;
   font-size: 11px;

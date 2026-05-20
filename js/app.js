@@ -86,21 +86,26 @@ const SILENT_WAV =
 
 function unlockAudio() {
   if (state.audioUnlocked) return;
-  // Don't disturb whatever src might already be primed by replay.
-  const prev = player.src;
+  // Set the flag immediately so re-entrant calls short-circuit. If the
+  // priming actually fails, we'll revert below — the next user gesture
+  // gets another shot.
+  state.audioUnlocked = true;
   player.src = SILENT_WAV;
   const p = player.play();
   if (p && typeof p.then === 'function') {
     p.then(() => {
-      state.audioUnlocked = true;
-      player.pause();
-      if (prev) player.src = prev;
+      // Only clean up if no real audio has been queued in the meantime —
+      // otherwise we'd be pausing/clearing the actual lottery audio that
+      // playAudio() just kicked off. This guard fixes the race that caused
+      // intermittent silence on fast-returning adapters.
+      if (player.src === SILENT_WAV) {
+        player.pause();
+        player.removeAttribute('src');
+      }
     }).catch(() => {
-      // Browser refused even the silent file — fall back to manual replay.
-      if (prev) player.src = prev;
+      state.audioUnlocked = false;
+      if (player.src === SILENT_WAV) player.removeAttribute('src');
     });
-  } else {
-    state.audioUnlocked = true;
   }
 }
 
@@ -379,24 +384,49 @@ async function runForAdapter(adapter) {
       speedOffset:   state.speedOffset,
       format:        'wav',
     });
-    if (state.lastAudioUrl) URL.revokeObjectURL(state.lastAudioUrl);
-    state.lastAudioUrl = URL.createObjectURL(audioBlob);
-    player.src = state.lastAudioUrl;
+    // Start playback the instant the bytes arrive — UI updates run after.
+    // Every ms before play() is a ms of dead air, especially on slow
+    // pane transitions or older devices.
+    const playing = playAudio(audioBlob);
     if (tokensRemaining) balanceEl.textContent = `${tokensRemaining.toLocaleString()} jeton`;
     setPane('result');
     setStatus('');
-    // Auto-play. The element was unlocked during the original mic/chip click,
-    // so this should succeed. If a browser still refuses (e.g. iOS Low-Power
-    // Mode), the replay button stays available as a manual fallback.
-    player.play().catch((err) => {
-      console.warn('autoplay blocked', err);
-      setStatus('Tape pou koute rezilta a.');
-    });
+    await playing;
   } catch (e) {
     console.error('TTS failed', e);
     // Don't hide the text — just announce the failure in the status bar.
     setPane('result');
     setStatus('Vwa pa rive jwenn — sèlman tèks la disponib.');
+  }
+}
+
+// Single playback path used by every adapter so behavior is uniform:
+//   1. Hard-reset the element (pause + new src) so an in-flight load from
+//      a previous result can't AbortError this one on rapid-fire taps.
+//   2. Issue play(); on NotAllowed/Abort failure, retry once after a tick.
+//      Safari sometimes rejects the first play() after src change and
+//      accepts the immediate retry — recovering silently here is better
+//      than asking the user to tap replay.
+//   3. On second failure, surface the manual fallback in the status bar
+//      and resolve without throwing (the result text is still visible).
+async function playAudio(blob) {
+  if (state.lastAudioUrl) URL.revokeObjectURL(state.lastAudioUrl);
+  state.lastAudioUrl = URL.createObjectURL(blob);
+  player.pause();
+  player.src = state.lastAudioUrl;
+  try {
+    await player.play();
+    return;
+  } catch (err1) {
+    if (err1?.name === 'NotAllowedError' || err1?.name === 'AbortError') {
+      await new Promise((r) => setTimeout(r, 80));
+      try {
+        await player.play();
+        return;
+      } catch { /* fall through */ }
+    }
+    console.warn('autoplay refused', err1);
+    setStatus('Tape pou koute rezilta a.');
   }
 }
 

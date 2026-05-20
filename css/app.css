@@ -162,7 +162,9 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 }
 
 .mic-btn {
-  width: min(56vw, 220px);
+  /* ≈ 2/3 of the original 220px / 56vw. Sized so the hero stays the
+     dominant element and the mic reads as the CTA below it. */
+  width: min(37vw, 146px);
   aspect-ratio: 1 / 1;
   border-radius: 50%;
   background: var(--gradient-primary);
@@ -171,8 +173,8 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   align-items: center;
   justify-content: center;
   box-shadow:
-    0 0 0 8px rgba(255, 255, 255, 0.55),
-    0 14px 38px var(--color-btn-shadow);
+    0 0 0 6px rgba(255, 255, 255, 0.55),
+    0 10px 28px var(--color-btn-shadow);
   transition: transform 0.12s ease, box-shadow 0.18s ease;
   animation: pulse 2.6s ease-in-out infinite;
 }
@@ -184,18 +186,18 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   background: linear-gradient(96deg, #ff6b81 0%, #e94560 100%);
   animation: pulse-listening 1.0s ease-in-out infinite;
   box-shadow:
-    0 0 0 10px rgba(233, 69, 96, 0.18),
-    0 14px 38px rgba(233, 69, 96, 0.45);
+    0 0 0 7px rgba(233, 69, 96, 0.18),
+    0 10px 28px rgba(233, 69, 96, 0.45);
 }
-.mic-icon { width: 44%; height: 44%; }
+.mic-icon { width: 46%; height: 46%; }
 
 @keyframes pulse {
-  0%, 100% { box-shadow: 0 0 0 8px  rgba(255,255,255,0.55), 0 14px 38px var(--color-btn-shadow); }
-  50%      { box-shadow: 0 0 0 18px rgba(255,255,255,0.20), 0 14px 42px var(--color-btn-shadow); }
+  0%, 100% { box-shadow: 0 0 0 6px  rgba(255,255,255,0.55), 0 10px 28px var(--color-btn-shadow); }
+  50%      { box-shadow: 0 0 0 13px rgba(255,255,255,0.20), 0 10px 32px var(--color-btn-shadow); }
 }
 @keyframes pulse-listening {
-  0%, 100% { box-shadow: 0 0 0 8px  rgba(233,69,96,0.20), 0 14px 38px rgba(233,69,96,0.40); }
-  50%      { box-shadow: 0 0 0 22px rgba(233,69,96,0.04), 0 14px 42px rgba(233,69,96,0.55); }
+  0%, 100% { box-shadow: 0 0 0 7px  rgba(233,69,96,0.20), 0 10px 28px rgba(233,69,96,0.40); }
+  50%      { box-shadow: 0 0 0 16px rgba(233,69,96,0.04), 0 10px 32px rgba(233,69,96,0.55); }
 }
 
 .hint {
@@ -457,7 +459,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 .api-toggle.is-active.is-locked { cursor: not-allowed; opacity: 0.85; }
 
 @media (max-width: 480px) {
-  .mic-btn { width: 60vw; }
+  .mic-btn { width: 40vw; }
   .hint { font-size: 16px; }
   .alt-auth-card.pane-card { padding: 22px; }
 }

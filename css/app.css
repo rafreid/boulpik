@@ -422,7 +422,8 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 .alt-auth-card.pane-card > * { width: 100%; }
 .alt-auth-card.pane-card > .replay-btn,
 .alt-auth-card.pane-card > .result-game,
-.alt-auth-card.pane-card > .spinner { width: auto; }
+.alt-auth-card.pane-card > .spinner,
+.alt-auth-card.pane-card > .card-close { width: auto; }
 
 /* ── Voice/speed toggles inside the settings popover ─────────────────── */
 /* Palefo's `.alt-methods` is the right component for a compact segmented

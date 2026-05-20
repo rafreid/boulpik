@@ -34,11 +34,17 @@
 import demoAdapter        from './demo.js';
 import lotoHaitiAdapter   from './loto_haiti.js';
 import megamillionsAdapter from './megamillions.js';
+import powerballAdapter   from './powerball.js';
+import nyNumbersAdapter   from './ny_numbers.js';
+import nyWin4Adapter      from './ny_win4.js';
 
 export const LOTTERIES = [
   demoAdapter,
   lotoHaitiAdapter,
   megamillionsAdapter,
+  powerballAdapter,
+  nyNumbersAdapter,
+  nyWin4Adapter,
 ];
 
 // Quick lookup by id. Built once so the rest of the app can `O(1)` resolve.

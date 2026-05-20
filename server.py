@@ -63,6 +63,12 @@ LOTTERY_SOURCES = {
     # Real-world examples — replace with the actual endpoint you have access to.
     'loto_haiti':   'https://example.com/api/loto-haiti/latest',
     'megamillions': 'https://data.ny.gov/resource/5xaw-6ayf.json?$limit=1&$order=draw_date%20DESC',
+    'powerball':    'https://data.ny.gov/resource/d6yy-54nr.json?$limit=1&$order=draw_date%20DESC',
+    # NY Numbers (3-digit, midday + evening) and Win 4 (4-digit) ship as
+    # one combined Socrata dataset; both adapters point at the same URL
+    # and slice different fields on the client.
+    'ny_numbers':   'https://data.ny.gov/resource/hsys-3def.json?$limit=1&$order=draw_date%20DESC',
+    'ny_win4':      'https://data.ny.gov/resource/hsys-3def.json?$limit=1&$order=draw_date%20DESC',
 }
 
 _HOP_BY_HOP = {

@@ -18,7 +18,6 @@ const workingSub    = $('#working-sub');
 const resultGame    = $('#result-game');
 const resultText    = $('#result-text');
 const replayBtn     = $('#replay-btn');
-const againBtn      = $('#again-btn');
 const errorText     = $('#error-text');
 const restartBtn    = $('#restart-btn');
 const clearBtn      = $('#clear-btn');
@@ -42,7 +41,7 @@ const state = {
   speedOffset: 0,              // -20..+20 (Palefo range)
   forcedLotteryId: null,       // null = decide from voice intent
   lastAudioUrl: null,          // object URL for replay
-  lastResult: null,            // last NormalizedResult, for "Mande yon lòt" → replay
+  lastResult: null,            // last NormalizedResult — surfaces of replay support
   audioUnlocked: false,        // true once we've played anything via a user gesture
   enabledLotteryIds: loadEnabledIds(),  // Set<string> of adapter ids the user has switched on
 };
@@ -135,7 +134,6 @@ async function boot() {
   wireSettings();
   wireMic();
   wireReplay();
-  wireAgain();
   wireRestart();
   wireClear();
 
@@ -444,14 +442,6 @@ function wireReplay() {
   player.addEventListener('ended', () => replayBtn.classList.remove('playing'));
 }
 
-function wireAgain() {
-  againBtn.addEventListener('click', () => {
-    player.pause();
-    setStatus('');
-    setPane('listen');
-  });
-}
-
 function wireRestart() {
   restartBtn.addEventListener('click', () => {
     setStatus('');
@@ -459,10 +449,9 @@ function wireRestart() {
   });
 }
 
-// Dismiss the current result and put the app back to its clean idle state.
-// Unlike "Mande yon lòt" (which just transitions panes), this also pauses
-// in-flight playback, revokes the audio blob URL (so we don't leak memory
-// across long sessions), and clears the cached last result.
+// Dismiss the current result and put the app back to its clean idle state:
+// pause in-flight playback, revoke the audio blob URL (so we don't leak
+// memory across long sessions), and clear the cached last result.
 function clearResult() {
   player.pause();
   if (state.lastAudioUrl) {

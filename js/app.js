@@ -29,9 +29,12 @@ const settingsPop   = $('#settings-popover');
 const speedControl  = $('#speed-control');
 const voiceControl  = $('#voice-control');
 const lotterySelect = $('#lottery-select');
+const apiToggles    = $('#api-toggles');
 
 /* ── State ───────────────────────────────────────────────────────────── */
 const api = new PalefoAPI();
+const ENABLED_LS_KEY = 'boulpik.enabledLotteries';
+
 const state = {
   voices: [],                  // [{id, displayName, gender, …}]
   voiceId: null,               // currently selected voice UUID
@@ -40,7 +43,38 @@ const state = {
   lastAudioUrl: null,          // object URL for replay
   lastResult: null,            // last NormalizedResult, for "Mande yon lòt" → replay
   audioUnlocked: false,        // true once we've played anything via a user gesture
+  enabledLotteryIds: loadEnabledIds(),  // Set<string> of adapter ids the user has switched on
 };
+
+/* ── Enabled-API persistence ─────────────────────────────────────────── */
+// localStorage holds an array of adapter ids the user has enabled. If the
+// key is missing or corrupt we default to "everything on" — matches the
+// behavior before this feature shipped, so first-load is unsurprising.
+// We also reconcile against the live registry on load: ids that no longer
+// have an adapter (e.g. one was removed) get dropped silently.
+function loadEnabledIds() {
+  try {
+    const raw = localStorage.getItem(ENABLED_LS_KEY);
+    if (raw) {
+      const arr = JSON.parse(raw);
+      if (Array.isArray(arr)) {
+        const valid = arr.filter((id) => LOTTERY_BY_ID[id]);
+        if (valid.length) return new Set(valid);
+      }
+    }
+  } catch { /* fall through */ }
+  return new Set(LOTTERIES.map((l) => l.id));
+}
+
+function saveEnabledIds() {
+  try {
+    localStorage.setItem(ENABLED_LS_KEY, JSON.stringify([...state.enabledLotteryIds]));
+  } catch { /* private mode / quota — silently ignore */ }
+}
+
+function getEnabledAdapters() {
+  return LOTTERIES.filter((a) => state.enabledLotteryIds.has(a.id));
+}
 
 // 44-byte silent mono WAV used to "unlock" the <audio> element on first tap.
 // Browsers gate autoplay behind a user gesture; we lose that gesture context
@@ -91,6 +125,7 @@ function setStatus(msg) {
 async function boot() {
   populateLotteryChips();
   populateLotterySelect();
+  populateApiToggles();
   wireSettings();
   wireMic();
   wireReplay();
@@ -123,10 +158,10 @@ async function boot() {
   }
 }
 
-/* ── Lottery chips + select ──────────────────────────────────────────── */
+/* ── Lottery chips + select + API toggles ────────────────────────────── */
 function populateLotteryChips() {
   chipRow.replaceChildren();
-  for (const adapter of LOTTERIES) {
+  for (const adapter of getEnabledAdapters()) {
     const btn = document.createElement('button');
     btn.className = 'chip';
     btn.textContent = adapter.displayName;
@@ -139,20 +174,72 @@ function populateLotteryChips() {
 }
 
 function populateLotterySelect() {
+  // Remember the user's prior choice so we can restore it (if still valid)
+  // after a re-render triggered by toggling APIs.
+  const previous = state.forcedLotteryId;
   lotterySelect.replaceChildren();
   const auto = document.createElement('option');
   auto.value = '';
   auto.textContent = 'Tande sa w di';
   lotterySelect.appendChild(auto);
-  for (const adapter of LOTTERIES) {
+  for (const adapter of getEnabledAdapters()) {
     const opt = document.createElement('option');
     opt.value = adapter.id;
     opt.textContent = adapter.displayName;
     lotterySelect.appendChild(opt);
   }
-  lotterySelect.addEventListener('change', () => {
-    state.forcedLotteryId = lotterySelect.value || null;
-  });
+  if (previous && state.enabledLotteryIds.has(previous)) {
+    lotterySelect.value = previous;
+  } else {
+    state.forcedLotteryId = null;
+  }
+  // Listener is attached once; safe to re-attach because we rebuilt children
+  // but the element itself is the same.
+  if (!lotterySelect._wired) {
+    lotterySelect.addEventListener('change', () => {
+      state.forcedLotteryId = lotterySelect.value || null;
+    });
+    lotterySelect._wired = true;
+  }
+}
+
+// One pill per registered adapter. Tapping toggles the adapter on/off.
+// The last enabled pill is locked — disabling it would leave the listen
+// pane with no chips and no recognizable spoken intents, which is
+// indistinguishable from a broken app.
+function populateApiToggles() {
+  apiToggles.replaceChildren();
+  for (const adapter of LOTTERIES) {
+    const btn = document.createElement('button');
+    btn.className = 'api-toggle';
+    btn.dataset.lotteryId = adapter.id;
+    btn.textContent = adapter.displayName;
+    btn.setAttribute('role', 'switch');
+    if (state.enabledLotteryIds.has(adapter.id)) btn.classList.add('is-active');
+    btn.addEventListener('click', () => {
+      const isOn = state.enabledLotteryIds.has(adapter.id);
+      if (isOn && state.enabledLotteryIds.size === 1) {
+        // Last one — blink the lock styling and ignore.
+        btn.classList.add('is-locked');
+        setTimeout(() => btn.classList.remove('is-locked'), 600);
+        return;
+      }
+      if (isOn) {
+        state.enabledLotteryIds.delete(adapter.id);
+        btn.classList.remove('is-active');
+      } else {
+        state.enabledLotteryIds.add(adapter.id);
+        btn.classList.add('is-active');
+      }
+      btn.setAttribute('aria-checked', String(!isOn));
+      saveEnabledIds();
+      // Refresh surfaces that depend on the enabled set.
+      populateLotteryChips();
+      populateLotterySelect();
+    });
+    btn.setAttribute('aria-checked', String(state.enabledLotteryIds.has(adapter.id)));
+    apiToggles.appendChild(btn);
+  }
 }
 
 /* ── Settings popover ────────────────────────────────────────────────── */
@@ -222,10 +309,11 @@ function wireMic() {
       listenHint.textContent = 'Tape pou mande rezilta lotri a';
 
       // Forced choice from settings wins over intent matching — useful when
-      // the recognizer is having a bad day.
+      // the recognizer is having a bad day. Intent matching is scoped to
+      // the adapters the user has switched on in the settings popover.
       const adapter = state.forcedLotteryId
         ? LOTTERY_BY_ID[state.forcedLotteryId]
-        : matchLottery(phrase);
+        : matchLottery(phrase, getEnabledAdapters());
 
       if (!adapter) {
         showError(`Pa rekonèt lotri sa a: « ${phrase} ». Chwazi yon nan chip yo anba.`);

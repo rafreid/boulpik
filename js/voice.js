@@ -98,6 +98,10 @@ export function stopListening() {
  * Find the best lottery adapter for a recognized phrase. Returns the
  * adapter object or `null` if nothing scored above the threshold.
  *
+ * `candidates` lets the caller restrict matching to a subset — used by
+ * the settings "available APIs" toggles so disabled adapters can't be
+ * spoken into existence. Defaults to the full registry.
+ *
  * Scoring per adapter = best score across all of its `names` aliases.
  * Per alias:
  *   - direct substring containment        → 1.0
@@ -106,14 +110,14 @@ export function stopListening() {
  * The threshold (0.5) is calibrated against the example aliases — feel free
  * to tune downward if your aliases are very short single-word names.
  */
-export function matchLottery(phrase) {
+export function matchLottery(phrase, candidates = LOTTERIES) {
   const text = (phrase || '').toLowerCase().trim();
   if (!text) return null;
 
   let best = null;
   let bestScore = 0;
 
-  for (const adapter of LOTTERIES) {
+  for (const adapter of candidates) {
     for (const alias of adapter.names) {
       const score = aliasScore(text, alias);
       if (score > bestScore) {

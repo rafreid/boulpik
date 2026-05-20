@@ -409,6 +409,53 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   color: var(--color-primary-80);
 }
 
+/* ── API toggle pills (settings popover) ─────────────────────────────── */
+/* One pill per registered lottery adapter. Tapping toggles its is-active
+   state; a tiny status dot on the leading edge reinforces the on/off
+   semantics so it doesn't read as a single-select segmented control. */
+.api-toggle-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.api-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 7px 13px;
+  border-radius: var(--radius-full);
+  background: var(--color-toggle-bg);
+  color: var(--color-primary-80);
+  border: 1px solid var(--color-card-border);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, transform 0.12s ease;
+}
+.api-toggle::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-primary-20);
+  flex-shrink: 0;
+  transition: background 0.18s ease;
+}
+.api-toggle:hover { background: #fff; color: var(--color-primary); }
+.api-toggle:active { transform: scale(0.96); }
+.api-toggle.is-active {
+  background: var(--gradient-primary);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: var(--color-btn-shadow) 0px 3px 10px;
+}
+.api-toggle.is-active::before { background: #fff; }
+/* When a pill is the *only* one enabled, disabling it would empty the
+   listen pane. We visually flag it as locked so the user understands the
+   non-response when they tap. */
+.api-toggle.is-active.is-locked { cursor: not-allowed; opacity: 0.85; }
+
 @media (max-width: 480px) {
   .mic-btn { width: 60vw; }
   .hint { font-size: 16px; }

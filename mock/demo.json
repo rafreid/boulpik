@@ -1,0 +1,8 @@
+{
+  "game": "Demo Lottery",
+  "drawDate": "2026-05-19",
+  "drawTime": "20:00",
+  "numbers": [12, 47, 19, 33, 8],
+  "bonus": 27,
+  "jackpot": "1,250,000 HTG"
+}

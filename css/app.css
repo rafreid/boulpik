@@ -1,0 +1,416 @@
+/* Boulpik app-specific overlay. Loaded AFTER palefo.css so this layer wins
+   on conflict — but most rules here are for elements Palefo's stylesheet
+   doesn't define (the mic centerpiece, the pane state machine, the topbar
+   and statusbar). */
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+  color: var(--color-primary);
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Body inherits the linear-gradient set in palefo.css. Lock viewport sizing. */
+body {
+  font-size: 14px;   /* override the Palefo 12px body default — too small for a single-purpose mic UI */
+}
+
+button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+[hidden] { display: none !important; }
+
+/* ── Layout shell ────────────────────────────────────────────────────── */
+:root {
+  --topbar-h:    56px;
+  --statusbar-h: 36px;
+  --safe-top:    env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* ── Top bar ────────────────────────────────────────────────────────── */
+#topbar {
+  position: fixed; top: 0; left: 0; right: 0;
+  height: calc(var(--topbar-h) + var(--safe-top));
+  padding-top: var(--safe-top);
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--color-card-border);
+  display: flex; align-items: center; justify-content: space-between;
+  padding-left: 18px; padding-right: 14px;
+  z-index: 10;
+}
+.logo-block {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.05;
+  gap: 2px;
+}
+.logo {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.6px;
+  background: var(--gradient-primary);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+.logo span {
+  color: var(--color-primary);
+  -webkit-text-fill-color: var(--color-primary);
+}
+.logo-tagline {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--color-primary-80);
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  text-transform: uppercase;
+}
+
+/* Settings gear — matches Palefo's `.alt-social-btn` square-with-radius
+   silhouette, but circular. */
+.settings-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--color-toggle-bg);
+  color: var(--color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--color-card-border);
+  box-shadow: 0 2px 8px var(--color-card-shadow);
+  transition: background 0.18s ease, color 0.18s ease, transform 0.12s ease, box-shadow 0.18s ease;
+}
+.settings-btn:hover  { background: #fff; box-shadow: 0 4px 14px var(--color-card-shadow); }
+.settings-btn:active { transform: scale(0.92); }
+.settings-btn.open   {
+  background: var(--gradient-primary);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 6px 14px var(--color-btn-shadow);
+}
+
+/* Settings popover — re-uses Palefo's `.alt-auth-card` look via shared tokens. */
+.settings-popover {
+  position: fixed;
+  top: calc(var(--topbar-h) + var(--safe-top) + 6px);
+  right: 10px;
+  z-index: 100;
+  min-width: 260px;
+  max-width: 340px;
+  background: var(--color-card-bg);
+  border: 1px solid var(--color-card-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--color-card-shadow) 0px 14px 36px 0px;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* ── Stage / panes ───────────────────────────────────────────────────── */
+#stage {
+  position: absolute;
+  top: calc(var(--topbar-h) + var(--safe-top));
+  left: 0; right: 0;
+  bottom: calc(var(--statusbar-h) + var(--safe-bottom));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.stage-pane {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+}
+/* On the listen pane, pull the hero+mic pair closer together so they read
+   as one stacked composition; everything below (hint, chips) keeps the
+   wider rhythm. */
+.stage-pane[data-pane="listen"] {
+  gap: 20px;
+}
+.stage-pane[data-pane="listen"] .hero-img + .mic-btn {
+  margin-top: -8px;
+}
+
+/* ── LISTEN pane: hero banner + mic + chips ─────────────────────────── */
+/* Hero illustration sits above the mic. Constrained to a card width with
+   a soft border and shadow that match the rest of the Palefo card system,
+   so it reads as a designed banner rather than a stretched image. */
+.hero-img {
+  display: block;
+  width: min(72vw, 320px);
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-card-border);
+  box-shadow: var(--color-card-shadow) 0px 14px 36px 0px;
+  background: var(--color-card-bg);
+}
+
+.mic-btn {
+  width: min(56vw, 220px);
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+  background: var(--gradient-primary);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow:
+    0 0 0 8px rgba(255, 255, 255, 0.55),
+    0 14px 38px var(--color-btn-shadow);
+  transition: transform 0.12s ease, box-shadow 0.18s ease;
+  animation: pulse 2.6s ease-in-out infinite;
+}
+.mic-btn:active {
+  transform: scale(0.96);
+  animation: none;
+}
+.mic-btn.listening {
+  background: linear-gradient(96deg, #ff6b81 0%, #e94560 100%);
+  animation: pulse-listening 1.0s ease-in-out infinite;
+  box-shadow:
+    0 0 0 10px rgba(233, 69, 96, 0.18),
+    0 14px 38px rgba(233, 69, 96, 0.45);
+}
+.mic-icon { width: 44%; height: 44%; }
+
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 0 8px  rgba(255,255,255,0.55), 0 14px 38px var(--color-btn-shadow); }
+  50%      { box-shadow: 0 0 0 18px rgba(255,255,255,0.20), 0 14px 42px var(--color-btn-shadow); }
+}
+@keyframes pulse-listening {
+  0%, 100% { box-shadow: 0 0 0 8px  rgba(233,69,96,0.20), 0 14px 38px rgba(233,69,96,0.40); }
+  50%      { box-shadow: 0 0 0 22px rgba(233,69,96,0.04), 0 14px 42px rgba(233,69,96,0.55); }
+}
+
+.hint {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-primary);
+  text-align: center;
+  max-width: 80%;
+}
+
+/* Chip row — uses Palefo card tokens but shaped as inline pills. */
+.chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  max-width: 90%;
+}
+.chip {
+  font-size: 13px;
+  font-weight: 700;
+  padding: 9px 16px;
+  border-radius: var(--radius-full);
+  background: var(--color-card-bg);
+  color: var(--color-primary);
+  border: 1px solid var(--color-card-border);
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px var(--color-card-shadow);
+  transition: background 0.18s ease, color 0.18s ease, transform 0.12s ease, box-shadow 0.18s ease;
+}
+.chip:hover  {
+  background: #fff;
+  box-shadow: 0 4px 14px var(--color-card-shadow);
+}
+.chip:active {
+  transform: scale(0.96);
+  background: var(--gradient-primary);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 6px 20px var(--color-btn-shadow);
+}
+
+/* ── WORKING pane: spinner ───────────────────────────────────────────── */
+.spinner {
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  border: 5px solid var(--color-primary-15);
+  border-top-color: var(--color-accent-purple);
+  animation: spin 0.9s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.working-label {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-primary);
+  letter-spacing: 0.2px;
+  text-align: center;
+}
+.working-sub {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-primary-70);
+  text-align: center;
+  font-style: italic;
+}
+
+/* ── RESULT pane ─────────────────────────────────────────────────────── */
+.result-game {
+  align-self: center;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: #fff;
+  background: var(--gradient-primary);
+  border-radius: var(--radius-full);
+  padding: 5px 14px;
+  box-shadow: var(--color-btn-shadow) 0px 3px 10px;
+}
+.result-text {
+  font-size: 17px;
+  font-weight: 500;
+  color: var(--color-primary);
+  text-align: center;
+  line-height: 1.55;
+  max-height: 28vh;
+  overflow-y: auto;
+}
+.replay-btn {
+  align-self: center;
+  width: min(38vw, 140px);
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+  background: var(--gradient-primary);
+  color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow:
+    0 0 0 6px rgba(255, 255, 255, 0.55),
+    0 12px 36px var(--color-btn-shadow);
+  transition: transform 0.12s ease, box-shadow 0.18s ease;
+}
+.replay-btn:active { transform: scale(0.96); }
+.replay-btn.playing {
+  background: linear-gradient(96deg, #ff8a9b 0%, #e94560 100%);
+  box-shadow:
+    0 0 0 6px rgba(255, 138, 155, 0.18),
+    0 12px 36px rgba(255, 138, 155, 0.45);
+  animation: pulse-playing 1.2s ease-in-out infinite;
+}
+@keyframes pulse-playing {
+  0%, 100% { box-shadow: 0 0 0 6px  rgba(255,138,155,0.18), 0 12px 36px rgba(255,138,155,0.30); }
+  50%      { box-shadow: 0 0 0 18px rgba(255,138,155,0.05), 0 12px 36px rgba(255,138,155,0.45); }
+}
+.replay-icon { width: 42%; height: 42%; }
+.replay-btn .icon-pause { display: none; }
+.replay-btn.playing .icon-play  { display: none; }
+.replay-btn.playing .icon-pause { display: block; }
+
+/* The "again" / "restart" buttons use Palefo's `.alt-primary` directly,
+   but our layout wants them as a max-width pill rather than full-bleed. */
+.alt-primary.action-btn {
+  width: auto;
+  min-width: 200px;
+  padding: 0 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: transform 0.12s ease, box-shadow 0.18s ease;
+}
+.alt-primary.action-btn:hover  { transform: translateY(-1px); }
+.alt-primary.action-btn:active { transform: scale(0.97); }
+
+/* ── ERROR ───────────────────────────────────────────────────────────── */
+.error-icon {
+  width: 110px; height: 110px;
+  border-radius: 50%;
+  background: linear-gradient(96deg, #ff8a9b 0%, #e94560 100%);
+  color: #fff;
+  font-size: 72px;
+  font-weight: 800;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 10px 30px rgba(233, 69, 96, 0.32);
+}
+.error-text {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--color-primary);
+  text-align: center;
+  max-width: 80%;
+}
+
+/* ── Status bar ──────────────────────────────────────────────────────── */
+#statusbar {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  height: calc(var(--statusbar-h) + var(--safe-bottom));
+  padding-bottom: var(--safe-bottom);
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-top: 1px solid var(--color-card-border);
+  display: flex; align-items: center; justify-content: space-between;
+  padding-left: 16px; padding-right: 16px;
+  font-size: 12px;
+  color: var(--color-primary-80);
+  z-index: 10;
+}
+.status-msg {
+  flex: 1 1 auto;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-right: 12px;
+  font-weight: 500;
+}
+.balance {
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+/* ── Card variants ───────────────────────────────────────────────────── */
+/* Make Palefo's `.alt-auth-card` work for our centered, in-stage panes.
+   The default card is a column with gap:14px and max-width:380px — perfect
+   for our settings popover and the result/working panes. We just need to
+   center contents inside it. */
+.alt-auth-card.pane-card {
+  align-items: center;
+}
+.alt-auth-card.pane-card > * { width: 100%; }
+.alt-auth-card.pane-card > .replay-btn,
+.alt-auth-card.pane-card > .result-game,
+.alt-auth-card.pane-card > .spinner { width: auto; }
+
+/* ── Voice/speed toggles inside the settings popover ─────────────────── */
+/* Palefo's `.alt-methods` is the right component for a compact segmented
+   control — we re-use it verbatim. Just give the buttons a label-style
+   stripe for the boulpik voice/speed semantics. */
+.settings-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.settings-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--color-primary-80);
+}
+
+@media (max-width: 480px) {
+  .mic-btn { width: 60vw; }
+  .hint { font-size: 16px; }
+  .alt-auth-card.pane-card { padding: 22px; }
+}

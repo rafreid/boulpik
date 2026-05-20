@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ht">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#ffffff">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <title>Boulpik — Koute rezilta lotri</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <!-- Palefo's CSS @imports the same Inter face; the explicit <link> is here
+       for connection priming so the font lands before render. -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap">
+  <link rel="stylesheet" href="css/palefo.css">
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body class="app-root">
+
+  <header id="topbar">
+    <div class="logo-block">
+      <h1 class="logo">boul<span>pik</span></h1>
+      <span class="logo-tagline">— powered by Palefo TTS</span>
+    </div>
+    <button class="settings-btn" id="settings-btn"
+            aria-label="Reglaj" title="Reglaj">
+      <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+        <path d="M19.14 12.94a7.49 7.49 0 0 0 0-1.88l2.03-1.58a.5.5 0 0 0 .12-.61l-1.92-3.32a.5.5 0 0 0-.6-.22l-2.39.96a7.43 7.43 0 0 0-1.63-.94l-.36-2.54a.5.5 0 0 0-.5-.41h-3.84a.5.5 0 0 0-.5.41l-.36 2.54c-.59.24-1.13.55-1.63.94l-2.39-.96a.5.5 0 0 0-.6.22L2.71 8.87a.5.5 0 0 0 .12.61l2.03 1.58a7.49 7.49 0 0 0 0 1.88L2.83 14.52a.5.5 0 0 0-.12.61l1.92 3.32a.5.5 0 0 0 .6.22l2.39-.96c.5.39 1.04.7 1.63.94l.36 2.54a.5.5 0 0 0 .5.41h3.84a.5.5 0 0 0 .5-.41l.36-2.54c.59-.24 1.13-.55 1.63-.94l2.39.96a.5.5 0 0 0 .6-.22l1.92-3.32a.5.5 0 0 0-.12-.61l-2.03-1.58zM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z" fill="currentColor"/>
+      </svg>
+    </button>
+  </header>
+
+  <!-- Settings popover — re-uses Palefo's .alt-methods segmented control
+       for speed + voice, and .alt-field for the lottery dropdown. -->
+  <div class="settings-popover" id="settings-popover" hidden role="dialog" aria-modal="false">
+    <div class="settings-row">
+      <label class="settings-label">Vitès lekti</label>
+      <div class="alt-methods" id="speed-control" role="group">
+        <button class="alt-method-btn" data-speed="-5">Dousman</button>
+        <button class="alt-method-btn is-active" data-speed="0">Nòmal</button>
+        <button class="alt-method-btn" data-speed="5">Vit</button>
+      </div>
+    </div>
+    <div class="settings-row">
+      <label class="settings-label">Vwa</label>
+      <div class="alt-methods" id="voice-control" role="group">
+        <button class="alt-method-btn is-active" data-voice="female">Keke</button>
+        <button class="alt-method-btn" data-voice="male">Demostèn</button>
+      </div>
+    </div>
+    <div class="alt-field">
+      <label for="lottery-select">Lotri</label>
+      <select id="lottery-select" aria-label="Chwazi yon lotri">
+        <!-- populated by app.js from the registry -->
+      </select>
+    </div>
+  </div>
+
+  <main id="stage" data-state="">
+
+    <!-- LISTEN: idle/listening — tap mic to ask -->
+    <section class="stage-pane" data-pane="listen" hidden>
+      <img class="hero-img" src="images/boulpik_hero.svg" alt="" aria-hidden="true">
+      <button class="mic-btn" id="mic-btn" aria-label="Kenbe pou pale">
+        <svg class="mic-icon" viewBox="0 0 64 64" aria-hidden="true">
+          <rect x="24" y="10" width="16" height="30" rx="8" fill="currentColor"/>
+          <path d="M16 30v2c0 8.84 7.16 16 16 16s16-7.16 16-16v-2" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+          <line x1="32" y1="48" x2="32" y2="56" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+          <line x1="22" y1="56" x2="42" y2="56" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <p class="hint" id="listen-hint">Tape pou mande rezilta lotri a</p>
+      <div class="chip-row" id="chip-row"></div>
+    </section>
+
+    <!-- WORKING: spinner + status line, wrapped in Palefo's alt-auth-card -->
+    <section class="stage-pane" data-pane="working" hidden>
+      <div class="alt-auth-card pane-card">
+        <div class="spinner"></div>
+        <p class="working-label" id="working-label">…</p>
+        <p class="working-sub" id="working-sub" hidden></p>
+      </div>
+    </section>
+
+    <!-- RESULT: announcement card + replay button, wrapped in alt-auth-card -->
+    <section class="stage-pane" data-pane="result" hidden>
+      <div class="alt-auth-card pane-card">
+        <span class="result-game" id="result-game">—</span>
+        <p class="result-text" id="result-text"></p>
+        <button class="replay-btn" id="replay-btn" aria-label="Koute oswa kanpe son an">
+          <svg class="replay-icon icon-play" viewBox="0 0 64 64" aria-hidden="true">
+            <polygon points="22,16 22,48 50,32" fill="currentColor"/>
+          </svg>
+          <svg class="replay-icon icon-pause" viewBox="0 0 64 64" aria-hidden="true">
+            <rect x="20" y="16" width="8" height="32" rx="2" fill="currentColor"/>
+            <rect x="36" y="16" width="8" height="32" rx="2" fill="currentColor"/>
+          </svg>
+        </button>
+      </div>
+      <button class="alt-primary action-btn" id="again-btn" aria-label="Mande yon lòt rezilta">
+        <svg viewBox="0 0 24 24" aria-hidden="true" width="18" height="18">
+          <path d="M12 4v3l4-4-4-4v3a8 8 0 1 0 8 8h-2a6 6 0 1 1-6-6z" fill="currentColor"/>
+        </svg>
+        <span>Mande yon lòt</span>
+      </button>
+    </section>
+
+    <!-- ERROR: visual + restart -->
+    <section class="stage-pane" data-pane="error" hidden>
+      <div class="error-icon" aria-hidden="true">!</div>
+      <p class="error-text" id="error-text">Pa janm rive — eseye ankò</p>
+      <button class="alt-primary action-btn" id="restart-btn">Eseye ankò</button>
+    </section>
+
+  </main>
+
+  <footer id="statusbar">
+    <span class="status-msg" id="status-msg"></span>
+    <span class="balance" id="balance" title="Jeton ki rete">— jeton</span>
+  </footer>
+
+  <audio id="player" preload="auto" playsinline></audio>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
